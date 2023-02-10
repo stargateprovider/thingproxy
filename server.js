@@ -31,8 +31,7 @@ function addCORSHeaders(req, res) {
 
     if (req.headers["origin"]) {
         res.setHeader("Access-Control-Allow-Origin", req.headers["origin"]);
-    }
-    else {
+    } else {
         res.setHeader("Access-Control-Allow-Origin", "*");
     }
 }
@@ -63,16 +62,14 @@ function processRequest(req, res) {
         return writeResponse(res, 204);
     }
 
-    let result = config.fetch_regex.exec(req.url);
-    console.log(req.url, req)
+    const result = config.fetch_regex.exec(req.url);
 
     if (result && result.length == 2 && result[1]) {
         let remoteURL;
 
         try {
             remoteURL = new URL(decodeURI(result[1]));
-        }
-        catch (e) {
+        } catch (e) {
             return sendInvalidURLResponse(res);
         }
 
@@ -110,7 +107,7 @@ function processRequest(req, res) {
         delete req.headers["origin"];
         delete req.headers["referer"];
 
-        let proxyRequest = request({
+        const proxyRequest = request({
             url: remoteURL,
             headers: req.headers,
             method: req.method,
@@ -168,8 +165,7 @@ function receiveRequest(req, res) {
         return writeResponse(res, 200);
     }
 
-    let clientIP = getClientAddress(req);
-
+    const clientIP = getClientAddress(req);
     req.clientIP = clientIP;
 
     // Log our request
@@ -200,7 +196,6 @@ if (cluster.isMaster) {
 else
 {
     http.createServer(receiveRequest).listen(config.port);
-
     console.log("thingproxy.freeboard.io process started (PID " + process.pid + ")");
 }
 
