@@ -1,7 +1,6 @@
 const http = require('http');
 const https = require('https');
 const config = require("./config");
-const url = require("url");
 const request = require("request");
 const cluster = require('cluster');
 const throttle = require("tokenthrottle")({rate: config.max_requests_per_second});
@@ -65,12 +64,13 @@ function processRequest(req, res) {
     }
 
     let result = config.fetch_regex.exec(req.url);
+    console.log(req.url, req)
 
     if (result && result.length == 2 && result[1]) {
         let remoteURL;
 
         try {
-            remoteURL = url.parse(decodeURI(result[1]));
+            remoteURL = new URL(decodeURI(result[1]));
         }
         catch (e) {
             return sendInvalidURLResponse(res);
@@ -121,10 +121,10 @@ function processRequest(req, res) {
         proxyRequest.on('error', function (err) {
 
             if (err.code === "ENOTFOUND") {
-                return writeResponse(res, 502, "Host for " + url.format(remoteURL) + " cannot be found.")
+                return writeResponse(res, 502, "Host for " + remoteURL.href + " cannot be found.")
             }
             else {
-                console.log("Proxy Request Error (" + url.format(remoteURL) + "): " + err.toString());
+                console.log("Proxy Request Error (" + remoteURL.href + "): " + err.toString());
                 return writeResponse(res, 500);
             }
 
