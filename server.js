@@ -1,16 +1,16 @@
-var http = require('http');
-var https = require('https');
-var config = require("./config");
-var url = require("url");
-var request = require("request");
-var cluster = require('cluster');
-var throttle = require("tokenthrottle")({rate: config.max_requests_per_second});
+const http = require('http');
+const https = require('https');
+const config = require("./config");
+const url = require("url");
+const request = require("request");
+const cluster = require('cluster');
+const throttle = require("tokenthrottle")({rate: config.max_requests_per_second});
 
 http.globalAgent.maxSockets = Infinity;
 https.globalAgent.maxSockets = Infinity;
 
-var publicAddressFinder = require("public-address");
-var publicIP;
+const publicAddressFinder = require("public-address");
+let publicIP;
 
 // Get our public IP address
 publicAddressFinder(function (err, data) {
@@ -64,10 +64,10 @@ function processRequest(req, res) {
         return writeResponse(res, 204);
     }
 
-    var result = config.fetch_regex.exec(req.url);
+    let result = config.fetch_regex.exec(req.url);
 
     if (result && result.length == 2 && result[1]) {
-        var remoteURL;
+        let remoteURL;
 
         try {
             remoteURL = url.parse(decodeURI(result[1]));
@@ -110,7 +110,7 @@ function processRequest(req, res) {
         delete req.headers["origin"];
         delete req.headers["referer"];
 
-        var proxyRequest = request({
+        let proxyRequest = request({
             url: remoteURL,
             headers: req.headers,
             method: req.method,
@@ -130,8 +130,8 @@ function processRequest(req, res) {
 
         });
 
-        var requestSize = 0;
-        var proxyResponseSize = 0;
+        let requestSize = 0;
+        let proxyResponseSize = 0;
 
         req.pipe(proxyRequest).on('data', function (data) {
 
@@ -162,43 +162,46 @@ function processRequest(req, res) {
     }
 }
 
+function receiveRequest(req, res) {
+    // Process AWS health checks
+    if (req.url === "/health") {
+        return writeResponse(res, 200);
+    }
+
+    let clientIP = getClientAddress(req);
+
+    req.clientIP = clientIP;
+
+    // Log our request
+    if (config.enable_logging) {
+        console.log("%s %s %s", (new Date()).toJSON(), clientIP, req.method, req.url);
+    }
+
+    if (config.enable_rate_limiting) {
+        throttle.rateLimit(clientIP, function (err, limited) {
+            if (limited) {
+                return writeResponse(res, 429, "enhance your calm");
+            }
+
+            processRequest(req, res);
+        })
+    }
+    else {
+        processRequest(req, res);
+    }
+
+}
+
 if (cluster.isMaster) {
-    for (var i = 0; i < config.cluster_process_count; i++) {
+    for (let i = 0; i < config.cluster_process_count; i++) {
         cluster.fork();
     }
 }
 else
 {
-    http.createServer(function (req, res) {
-
-        // Process AWS health checks
-        if (req.url === "/health") {
-            return writeResponse(res, 200);
-        }
-
-        var clientIP = getClientAddress(req);
-
-        req.clientIP = clientIP;
-
-        // Log our request
-        if (config.enable_logging) {
-            console.log("%s %s %s", (new Date()).toJSON(), clientIP, req.method, req.url);
-        }
-
-        if (config.enable_rate_limiting) {
-            throttle.rateLimit(clientIP, function (err, limited) {
-                if (limited) {
-                    return writeResponse(res, 429, "enhance your calm");
-                }
-
-                processRequest(req, res);
-            })
-        }
-        else {
-            processRequest(req, res);
-        }
-
-    }).listen(config.port);
+    http.createServer(receiveRequest).listen(config.port);
 
     console.log("thingproxy.freeboard.io process started (PID " + process.pid + ")");
 }
+
+module.exports = receiveRequest;
