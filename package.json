@@ -9,7 +9,7 @@
     "request": "2.40.0",
     "tokenthrottle": "1.1.0",
     "public-address": "^0.1.1"
-  }
+  },
 
   "builds": [
     {
