@@ -10,4 +10,17 @@
     "tokenthrottle": "1.1.0",
     "public-address": "^0.1.1"
   }
+
+  "builds": [
+    {
+      "src": "server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "server.js"
+    }
+  ]
 }
