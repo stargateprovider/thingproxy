@@ -105,8 +105,7 @@ function processRequest(req, res) {
         }
         
         // Remove origin and referer headers. TODO: This is a bit naughty, we should remove at some point.
-        delete req.headers["origin"];
-        req.headers["origin"] = document.location.href;
+        // delete req.headers["origin"];
         delete req.headers["referer"];
 
         const proxyRequest = request({
