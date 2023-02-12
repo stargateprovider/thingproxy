@@ -69,7 +69,7 @@ function processRequest(req, res) {
 
     // Return options pre-flight requests right away
     if (req.method.toUpperCase() === "OPTIONS") {
-        return writeResponse(res, 200);
+        return writeResponse(res, 204);
     }
 
     const result = config.fetch_regex.exec(req.url);
