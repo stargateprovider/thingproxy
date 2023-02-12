@@ -18,7 +18,7 @@ publicAddressFinder(function (err, data) {
     }
 });
 
-function addCORSHeaders2(req, res) {
+function addCORSHeaders(req, res) {
     if (req.method.toUpperCase() === "OPTIONS") {
         if (req.headers["access-control-request-headers"]) {
             res.setHeader("Access-Control-Allow-Headers", req.headers["access-control-request-headers"]);
@@ -34,11 +34,9 @@ function addCORSHeaders2(req, res) {
     } else {
         res.setHeader("Access-Control-Allow-Origin", "*");
     }
-}
 
-function addCORSHeaders(req, res) {
     res.setHeader('Access-Control-Allow-Credentials', true)
-    res.setHeader('Access-Control-Allow-Origin', '*')
+    // res.setHeader('Access-Control-Allow-Origin', '*')
     // another common pattern
     // res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT')
