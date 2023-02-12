@@ -63,6 +63,7 @@ function processRequest(req, res) {
     }
 
     const result = config.fetch_regex.exec(req.url);
+    config.enable_logging && console.log(req.url, req.headers, res.headers)
 
     if (result && result.length == 2 && result[1]) {
         let remoteURL;
@@ -105,6 +106,7 @@ function processRequest(req, res) {
         
         // Remove origin and referer headers. TODO: This is a bit naughty, we should remove at some point.
         delete req.headers["origin"];
+        req.headers["origin"] = location.href;
         delete req.headers["referer"];
 
         const proxyRequest = request({
